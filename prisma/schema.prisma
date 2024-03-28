@@ -1,0 +1,97 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  MEMBER
+}
+
+model User {
+  id            String  @id @default(uuid())
+  name          String
+  email         String  @unique
+  password_hash String
+  role          Role    @default(MEMBER)
+  enabled       Boolean @default(true)
+
+  reviews MovieReview[]
+
+  @@map("users")
+}
+
+model Genre {
+  id   String @id @default(uuid())
+  name String
+
+  movies Movie[]
+
+  @@map("genres")
+}
+
+model Person {
+  id   String @id @default(uuid())
+  name String
+
+  directorOnMovies DirectorOnMovie[]
+  actorOnMovies    ActorOnMovie[]
+
+  @@map("persons")
+}
+
+model DirectorOnMovie {
+  person   Person @relation(fields: [personId], references: [id])
+  personId String @map("person_id")
+
+  movie   Movie  @relation(fields: [movieId], references: [id])
+  movieId String @map("movie_id")
+
+  @@id([personId, movieId])
+  @@map("directors")
+}
+
+model ActorOnMovie {
+  person   Person @relation(fields: [personId], references: [id])
+  personId String @map("person_id")
+
+  movie   Movie  @relation(fields: [movieId], references: [id])
+  movieId String @map("movie_id")
+
+  @@id([personId, movieId])
+  @@map("actors")
+}
+
+model Movie {
+  id          String   @id @default(uuid())
+  name        String
+  description String
+  genres      Genre[]
+  releaseDate DateTime @map("release_date")
+
+  directors DirectorOnMovie[]
+  actors    ActorOnMovie[]
+
+  created_at  DateTime      @default(now())
+  MovieReview MovieReview[]
+
+  @@map("movies")
+}
+
+model MovieReview {
+  user   User   @relation(fields: [userId], references: [id])
+  userId String @map("user_id")
+
+  movie   Movie  @relation(fields: [movieId], references: [id])
+  movieId String @map("movie_id")
+
+  rating  Int
+  comment String?
+
+  @@id([userId, movieId])
+  @@map("movie_reviews")
+}
